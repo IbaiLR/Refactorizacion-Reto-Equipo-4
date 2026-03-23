@@ -55,7 +55,7 @@ async function agregarAlumno() {
     dni.value,
     telefono.value,
     poblacion.value,
-    curso.value,
+    ciclo.value,
     tutor.value
   );
 
