@@ -17,7 +17,28 @@ if [ ! -f /var/www/html/.env ]; then
 fi
 
 php artisan key:generate --force
-php artisan migrate --force --seed
+php artisan migrate --force
+
+# Solo seedear si la BD está vacía (primera vez)
+SEEDED=$(php -r "
+try {
+    \$pdo = new PDO(
+        'mysql:host='.getenv('DB_HOST').';port='.getenv('DB_PORT').';dbname='.getenv('DB_DATABASE'),
+        getenv('DB_USERNAME'),
+        getenv('DB_PASSWORD')
+    );
+    echo \$pdo->query('SELECT COUNT(*) FROM familias_profesionales')->fetchColumn();
+} catch(Exception \$e) {
+    echo 0;
+}" 2>/dev/null)
+
+if [ "$SEEDED" = "0" ]; then
+    echo "BD vacía, ejecutando seeders..."
+    php artisan db:seed --force
+else
+    echo "BD ya tiene datos, omitiendo seeders."
+fi
+
 php artisan config:clear
 php artisan config:cache
 php artisan route:cache
