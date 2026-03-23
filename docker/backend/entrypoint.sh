@@ -11,6 +11,10 @@ done
 
 echo "MySQL listo"
 
+# Corregir permisos del storage (el volumen montado sobreescribe los del build)
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
 # Generar APP_KEY si no existe
 if [ ! -f /var/www/html/.env ]; then
     cp /var/www/html/.env.example /var/www/html/.env
