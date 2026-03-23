@@ -4,11 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\AlumnoEntrega;
 use App\Models\Alumnos;
-use App\Models\Estancia;
+use App\Models\Ciclos;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
 
 class AlumnosController extends Controller
 {
@@ -44,9 +43,19 @@ class AlumnosController extends Controller
             'tutor' => ['required']
         ]);
 
+        // Obtener el ciclo para extraer su 'grupo' (string)
+        $ciclo = Ciclos::findOrFail($validated['curso']);
+
         // Generar email y contraseña temporal
         $email = strtolower($validated['nombre']) . '.' . strtolower(explode(' ', $validated['apellidos'])[0]) . '@ikasle.egibide.org';
         $password = Hash::make('12345Abcde');
+
+        if (User::where('email', $email)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => "Ya existe un alumno con el email generado: $email"
+            ], 422);
+        }
 
         // USUARIO
         $user = User::create([
@@ -55,8 +64,8 @@ class AlumnosController extends Controller
             'role' => 'alumno',
         ]);
 
-        // ALUMNO
-        $alumno = Alumnos::create([
+        // ALUMNO con tutor y grupo (ciclo)
+        Alumnos::create([
             'nombre' => $validated['nombre'],
             'apellidos' => $validated['apellidos'],
             'matricula_id' => $validated['matricula'],
@@ -64,17 +73,9 @@ class AlumnosController extends Controller
             'ciudad' => $validated['ciudad'],
             'telefono' => $validated['telefono'],
             'user_id' => $user->id,
+            'tutor_id' => $validated['tutor'],
+            'grupo' => $ciclo->grupo,
         ]);
-
-        // // ESTANCIA
-        // Estancia::create([
-        //     'puesto' => 'Sin asignar',
-        //     'fecha_inicio' => now()->toDateString(),
-        //     'horas_totales' => 0,
-        //     'alumno_id' => $alumno->id,
-        //     'tutor_id' => $validated['tutor'],
-        //     'curso_id' => $validated['curso'],
-        // ]);
 
         return response()->json([
             'success' => true,
