@@ -47,7 +47,8 @@ services:
     volumes:
       - storage_data:/var/www/html/storage
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     restart: always
     networks:
       - dkf-network
@@ -68,6 +69,12 @@ services:
       - dkf-network
     ports:
       - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USERNAME}", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
 volumes:
   db_data:
